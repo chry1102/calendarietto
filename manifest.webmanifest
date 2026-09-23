@@ -1,0 +1,9 @@
+{
+  "name": "Lezioni — Calendario universitario",
+  "short_name": "Lezioni",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#090b12",
+  "theme_color": "#101018",
+  "lang": "it"
+}
