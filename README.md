@@ -4,7 +4,7 @@ Calendario universitario mobile-first con stile *Frosted Glass* scuro e a bassa 
 
 ## Cosa fa
 
-- Vista settimanale ottimizzata per telefono, con dettagli della lezione al tocco.
+- Vista settimanale e agenda giornaliera ottimizzate per telefono, con dettagli della lezione al tocco.
 - Creazione, modifica ed eliminazione delle lezioni dall’interfaccia.
 - Importazione di uno o più feed iCalendar/ICS: il proprio orario, Corso A/B e quelli degli amici.
 - Filtro immediato per **Corso A**, **Corso B** o tutti gli appuntamenti.
