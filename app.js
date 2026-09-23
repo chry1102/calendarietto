@@ -143,7 +143,7 @@ document.querySelector('#lessonForm').addEventListener('submit',e=>{
 });
 document.querySelector('#deleteLesson').onclick=()=>{
  const id=document.querySelector('#lessonId').value;
- const imported = state.importedLessons.some(x=>x.id===id); state.manualLessons=state.manualLessons.filter(x=>x.id!==id); state.importedLessons=state.importedLessons.filter(x=>x.id!==id);
+ const imported = id.startsWith('ics-') || state.importedLessons.some(x=>x.id===id); state.manualLessons=state.manualLessons.filter(x=>x.id!==id); state.importedLessons=state.importedLessons.filter(x=>x.id!==id);
  if(imported && !state.hiddenImportedIds.includes(id)) state.hiddenImportedIds.push(id);
  saveState();document.querySelector('#lessonDialog').close();render();setStatus('Lezione rimossa');
 };
