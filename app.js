@@ -64,9 +64,9 @@ function render() {
   const label=document.querySelector('#weekLabel');
   label.textContent=viewMode==='day' ? new Intl.DateTimeFormat('it-IT',{weekday:'long',day:'numeric',month:'long'}).format(cursor) : prettyDate(cursor)+' – '+prettyDate(addDays(cursor,6));
   const names=viewMode==='day' ? [new Intl.DateTimeFormat('it-IT',{weekday:'long'}).format(cursor)] : ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
-  const today=new Date(), calendar=document.querySelector('.calendar');
+  const today=new Date(); today.setHours(0,0,0,0); const calendar=document.querySelector('.calendar');
   calendar.classList.toggle('daily',viewMode==='day');
-  document.querySelector('#calendarHead').innerHTML=names.map((n,i)=>'<div class="day-head '+(mondayOf(today).getTime()===addDays(cursor,i).getTime()?'today':'')+'">'+n+'<br><b>'+addDays(cursor,i).getDate()+'</b></div>').join('');
+  document.querySelector('#calendarHead').innerHTML=names.map((n,i)=>'<div class="day-head '+(today.getTime()===addDays(cursor,i).getTime()?'today':'')+'">'+n+'<br><b>'+addDays(cursor,i).getDate()+'</b></div>').join('');
   document.querySelectorAll('.view-button').forEach(button=>button.classList.toggle('active',button.dataset.view===viewMode));
   const groups=['Tutti','A','B','Altro'];
   document.querySelector('#filterRow').innerHTML=groups.map(g=>'<button class="filter '+(g===activeFilter?'active':'')+'" data-filter="'+g+'">'+(g==='Tutti'?'Tutti': 'Corso '+g)+'</button>').join('');
