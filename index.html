@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#101018" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./styles.css" />
+  <title>Lezioni</title>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar glass">
+      <div><p class="eyebrow">UNIVERSITÀ</p><h1>Lezioni</h1></div>
+      <button class="icon-button" id="settingsButton" aria-label="Gestisci calendari">⚙</button>
+    </header>
+
+    <section class="glass controls">
+      <div class="date-row">
+        <button class="round-button" id="prevWeek" aria-label="Settimana precedente">‹</button>
+        <button class="week-label" id="weekLabel" aria-label="Vai a oggi"></button>
+        <button class="round-button" id="nextWeek" aria-label="Settimana successiva">›</button>
+      </div>
+      <div class="filter-row" id="filterRow"></div>
+    </section>
+
+    <section id="status" class="status" role="status"></section>
+    <section class="calendar glass" aria-label="Calendario settimanale">
+      <div class="calendar-head" id="calendarHead"></div>
+      <div class="week-grid" id="weekGrid"></div>
+    </section>
+
+    <button id="addLesson" class="fab" aria-label="Aggiungi lezione">+</button>
+  </main>
+
+  <dialog id="lessonDialog" class="dialog glass">
+    <form method="dialog" id="lessonForm">
+      <div class="dialog-header"><h2 id="lessonTitle">Lezione</h2><button value="cancel" class="icon-button" aria-label="Chiudi">×</button></div>
+      <input type="hidden" id="lessonId" />
+      <label>Titolo<input id="titleInput" required maxlength="100" placeholder="Es. Analisi II" /></label>
+      <div class="two-columns">
+        <label>Inizio<input id="startInput" type="datetime-local" required /></label>
+        <label>Fine<input id="endInput" type="datetime-local" required /></label>
+      </div>
+      <label>Aula / link<input id="locationInput" maxlength="140" placeholder="Es. Aula 3" /></label>
+      <label>Docente o note<textarea id="notesInput" rows="3" maxlength="500"></textarea></label>
+      <label>Corso
+        <select id="groupInput"><option value="A">Corso A</option><option value="B">Corso B</option><option value="Altro">Altro</option></select>
+      </label>
+      <label>Calendario
+        <select id="calendarInput"></select>
+      </label>
+      <div class="actions">
+        <button type="button" id="deleteLesson" class="danger">Elimina</button>
+        <span></span><button value="cancel">Annulla</button><button id="saveLesson" value="default" class="primary">Salva</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog" class="dialog glass wide">
+    <form method="dialog">
+      <div class="dialog-header"><h2>Calendari</h2><button value="cancel" class="icon-button" aria-label="Chiudi">×</button></div>
+      <p class="muted">Aggiungi l’URL ICS/iCalendar dell’università o di un amico. I dati restano in questo browser.</p>
+      <div id="calendarList" class="calendar-list"></div>
+      <fieldset>
+        <legend>Aggiungi calendario</legend>
+        <label>Nome<input id="newCalendarName" maxlength="60" placeholder="Es. Il mio orario" /></label>
+        <label>URL del feed ICS<input id="newCalendarUrl" type="url" placeholder="https://…/orario.ics" /></label>
+        <label>Etichetta corso
+          <select id="newCalendarGroup"><option value="A">Corso A</option><option value="B">Corso B</option><option value="Altro">Altro</option></select>
+        </label>
+        <button type="button" class="primary" id="addCalendar">Importa e salva</button>
+      </fieldset>
+      <p class="hint">Il feed viene aggiornato automaticamente una volta al giorno quando apri l’app. Se il server blocca le richieste dal browser (CORS), chiedi all’università un feed con accesso web o usa un piccolo proxy personale.</p>
+      <div class="actions"><span></span><button value="cancel">Chiudi</button></div>
+    </form>
+  </dialog>
+
+  <template id="lessonTemplate">
+    <article class="lesson-card"><span class="lesson-time"></span><strong class="lesson-name"></strong><span class="lesson-location"></span></article>
+  </template>
+  <script src="./app.js"></script>
+</body>
+</html>
