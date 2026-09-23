@@ -5,8 +5,8 @@ let cursor = mondayOf(new Date());
 let activeFilter = 'Tutti';
 
 function loadState() {
-  try { return JSON.parse(localStorage.getItem(DB_KEY)) || { calendars: [], manualLessons: [], importedLessons: [] }; }
-  catch { return { calendars: [], manualLessons: [], importedLessons: [] }; }
+  try { const saved = JSON.parse(localStorage.getItem(DB_KEY)) || {}; return { calendars: saved.calendars || [], manualLessons: saved.manualLessons || [], importedLessons: saved.importedLessons || [], hiddenImportedIds: saved.hiddenImportedIds || [] }; }
+  catch { return { calendars: [], manualLessons: [], importedLessons: [], hiddenImportedIds: [] }; }
 }
 function saveState() { localStorage.setItem(DB_KEY, JSON.stringify(state)); }
 function uid() { return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(); }
@@ -40,7 +40,7 @@ function parseIcs(text, calendar) {
 }
 function expandedLessons() {
   const start=cursor, end=addDays(cursor,7);
-  const raw=[...state.importedLessons,...state.manualLessons];
+  const raw=[...state.importedLessons.filter(e=>!state.hiddenImportedIds.includes(e.id) && !state.manualLessons.some(m=>m.id===e.id)),...state.manualLessons];
   return raw.flatMap(e => expandEvent(e,start,end)).filter(e=>e.start>=start && e.start<end);
 }
 function expandEvent(e, rangeStart, rangeEnd) {
@@ -137,13 +137,14 @@ document.querySelector('#lessonForm').addEventListener('submit',e=>{
   const calendarId=document.querySelector('#calendarInput').value, cal=getCalendar(calendarId);
   const event={id:id||'manual-'+uid(),calendarId,source:'manual',title:document.querySelector('#titleInput').value.trim(),start:new Date(document.querySelector('#startInput').value).toISOString(),end:new Date(document.querySelector('#endInput').value).toISOString(),location:document.querySelector('#locationInput').value.trim(),notes:document.querySelector('#notesInput').value.trim(),group:document.querySelector('#groupInput').value,rrule:'',uid:''};
   if(new Date(event.end)<=new Date(event.start)) return setStatus('La fine deve essere dopo l’inizio.');
+  state.manualLessons=state.manualLessons.filter(x=>x.id!==id);
   if(old?.source==='ics') state.importedLessons=state.importedLessons.filter(x=>x.id!==id);
-  else state.manualLessons=state.manualLessons.filter(x=>x.id!==id);
   state.manualLessons.push(event); saveState(); document.querySelector('#lessonDialog').close();render();setStatus('Lezione salvata');
 });
 document.querySelector('#deleteLesson').onclick=()=>{
  const id=document.querySelector('#lessonId').value;
- state.manualLessons=state.manualLessons.filter(x=>x.id!==id); state.importedLessons=state.importedLessons.filter(x=>x.id!==id);
+ const imported = state.importedLessons.some(x=>x.id===id); state.manualLessons=state.manualLessons.filter(x=>x.id!==id); state.importedLessons=state.importedLessons.filter(x=>x.id!==id);
+ if(imported && !state.hiddenImportedIds.includes(id)) state.hiddenImportedIds.push(id);
  saveState();document.querySelector('#lessonDialog').close();render();setStatus('Lezione rimossa');
 };
 document.querySelector('#addCalendar').onclick=async()=>{
