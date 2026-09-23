@@ -3,6 +3,7 @@ const DAY = 86400000;
 let state = loadState();
 let cursor = mondayOf(new Date());
 let activeFilter = 'Tutti';
+let viewMode = 'week';
 
 function loadState() {
   try { const saved = JSON.parse(localStorage.getItem(DB_KEY)) || {}; return { calendars: saved.calendars || [], manualLessons: saved.manualLessons || [], importedLessons: saved.importedLessons || [], hiddenImportedIds: saved.hiddenImportedIds || [] }; }
@@ -39,7 +40,7 @@ function parseIcs(text, calendar) {
   return events;
 }
 function expandedLessons() {
-  const start=cursor, end=addDays(cursor,7);
+  const start=cursor, end=addDays(cursor, viewMode === 'day' ? 1 : 7);
   const raw=[...state.importedLessons.filter(e=>!state.hiddenImportedIds.includes(e.id) && !state.manualLessons.some(m=>m.id===e.id)),...state.manualLessons];
   return raw.flatMap(e => expandEvent(e,start,end)).filter(e=>e.start>=start && e.start<end);
 }
@@ -60,14 +61,18 @@ function expandEvent(e, rangeStart, rangeEnd) {
 function getCalendar(id) { return state.calendars.find(c=>c.id===id); }
 function setStatus(message='') { document.querySelector('#status').textContent=message; }
 function render() {
-  const label=document.querySelector('#weekLabel'); label.textContent=prettyDate(cursor)+' – '+prettyDate(addDays(cursor,6));
-  const names=['Lun','Mar','Mer','Gio','Ven','Sab','Dom']; const today=new Date();
+  const label=document.querySelector('#weekLabel');
+  label.textContent=viewMode==='day' ? new Intl.DateTimeFormat('it-IT',{weekday:'long',day:'numeric',month:'long'}).format(cursor) : prettyDate(cursor)+' – '+prettyDate(addDays(cursor,6));
+  const names=viewMode==='day' ? [new Intl.DateTimeFormat('it-IT',{weekday:'long'}).format(cursor)] : ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  const today=new Date(), calendar=document.querySelector('.calendar');
+  calendar.classList.toggle('daily',viewMode==='day');
   document.querySelector('#calendarHead').innerHTML=names.map((n,i)=>'<div class="day-head '+(mondayOf(today).getTime()===addDays(cursor,i).getTime()?'today':'')+'">'+n+'<br><b>'+addDays(cursor,i).getDate()+'</b></div>').join('');
+  document.querySelectorAll('.view-button').forEach(button=>button.classList.toggle('active',button.dataset.view===viewMode));
   const groups=['Tutti','A','B','Altro'];
   document.querySelector('#filterRow').innerHTML=groups.map(g=>'<button class="filter '+(g===activeFilter?'active':'')+'" data-filter="'+g+'">'+(g==='Tutti'?'Tutti': 'Corso '+g)+'</button>').join('');
   const lessons=expandedLessons().filter(e=>activeFilter==='Tutti'||e.group===activeFilter);
   document.querySelector('#weekGrid').innerHTML='';
-  for(let i=0;i<7;i++) {
+  for(let i=0;i<(viewMode==='day'?1:7);i++) {
     const day=addDays(cursor,i), column=document.createElement('div'); column.className='day-column';
     const dayEvents=lessons.filter(e=>e.start.getFullYear()===day.getFullYear()&&e.start.getMonth()===day.getMonth()&&e.start.getDate()===day.getDate()).sort((a,b)=>a.start-b.start);
     if(!dayEvents.length) column.innerHTML='<span class="empty-day">—</span>';
@@ -124,10 +129,11 @@ function renderCalendarList() {
  const list=document.querySelector('#calendarList');
  list.innerHTML=state.calendars.length?state.calendars.map(c=>'<div class="calendar-row"><div><b>'+escapeHtml(c.name)+'</b><small>Corso '+c.group+' · '+escapeHtml(c.url)+'</small></div><button data-refresh="'+c.id+'">Aggiorna</button><button data-remove="'+c.id+'" aria-label="Rimuovi">×</button></div>').join(''):'<p class="muted">Nessun calendario importato.</p>';
 }
-document.querySelector('#prevWeek').onclick=()=>{cursor=addDays(cursor,-7);render()};
-document.querySelector('#nextWeek').onclick=()=>{cursor=addDays(cursor,7);render()};
-document.querySelector('#weekLabel').onclick=()=>{cursor=mondayOf(new Date());render()};
+document.querySelector('#prevWeek').onclick=()=>{cursor=addDays(cursor,viewMode==='day'?-1:-7);render()};
+document.querySelector('#nextWeek').onclick=()=>{cursor=addDays(cursor,viewMode==='day'?1:7);render()};
+document.querySelector('#weekLabel').onclick=()=>{const now=new Date(); now.setHours(0,0,0,0); cursor=viewMode==='day'?now:mondayOf(now);render()};
 document.querySelector('#filterRow').onclick=e=>{if(e.target.dataset.filter){activeFilter=e.target.dataset.filter;render()}};
+document.querySelector('.view-switch').onclick=e=>{if(e.target.dataset.view){viewMode=e.target.dataset.view; if(viewMode==='week') cursor=mondayOf(cursor); render()}};
 document.querySelector('#weekGrid').onclick=e=>{const card=e.target.closest('.lesson-card');if(card)showLesson(card.dataset.id)};
 document.querySelector('#addLesson').onclick=()=>showLesson();
 document.querySelector('#settingsButton').onclick=()=>{renderCalendarList();document.querySelector('#settingsDialog').showModal()};
