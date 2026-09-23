@@ -63,16 +63,17 @@ function setStatus(message='') { document.querySelector('#status').textContent=m
 function render() {
   const label=document.querySelector('#weekLabel');
   label.textContent=viewMode==='day' ? new Intl.DateTimeFormat('it-IT',{weekday:'long',day:'numeric',month:'long'}).format(cursor) : prettyDate(cursor)+' – '+prettyDate(addDays(cursor,6));
-  const names=viewMode==='day' ? [new Intl.DateTimeFormat('it-IT',{weekday:'long'}).format(cursor)] : ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  const names=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
   const today=new Date(); today.setHours(0,0,0,0); const calendar=document.querySelector('.calendar');
   calendar.classList.toggle('daily',viewMode==='day');
-  document.querySelector('#calendarHead').innerHTML=names.map((n,i)=>'<div class="day-head '+(today.getTime()===addDays(cursor,i).getTime()?'today':'')+'">'+n+'<br><b>'+addDays(cursor,i).getDate()+'</b></div>').join('');
   document.querySelectorAll('.view-button').forEach(button=>button.classList.toggle('active',button.dataset.view===viewMode));
   const groups=['Tutti','A','B','Altro'];
   document.querySelector('#filterRow').innerHTML=groups.map(g=>'<button class="filter '+(g===activeFilter?'active':'')+'" data-filter="'+g+'">'+(g==='Tutti'?'Tutti': 'Corso '+g)+'</button>').join('');
   const lessons=expandedLessons().filter(e=>activeFilter==='Tutti'||e.group===activeFilter);
+  if(viewMode==='day') { renderDailyAgenda(lessons, today); renderCalendarOptions(); return; }
+  document.querySelector('#calendarHead').innerHTML=names.map((n,i)=>'<div class="day-head '+(today.getTime()===addDays(cursor,i).getTime()?'today':'')+'">'+n+'<br><b>'+addDays(cursor,i).getDate()+'</b></div>').join('');
   document.querySelector('#weekGrid').innerHTML='';
-  for(let i=0;i<(viewMode==='day'?1:7);i++) {
+  for(let i=0;i<7;i++) {
     const day=addDays(cursor,i), column=document.createElement('div'); column.className='day-column';
     const dayEvents=lessons.filter(e=>e.start.getFullYear()===day.getFullYear()&&e.start.getMonth()===day.getMonth()&&e.start.getDate()===day.getDate()).sort((a,b)=>a.start-b.start);
     if(!dayEvents.length) column.innerHTML='<span class="empty-day">—</span>';
@@ -86,6 +87,27 @@ function render() {
     document.querySelector('#weekGrid').append(column);
   }
   renderCalendarOptions();
+}
+function renderDailyAgenda(lessons, today) {
+  const calendar=document.querySelector('.calendar');
+  const week=mondayOf(cursor);
+  const dayNames=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  const tabs=dayNames.map((name,index)=>{
+    const date=addDays(week,index), selected=date.getTime()===cursor.getTime(), isToday=date.getTime()===today.getTime();
+    return '<button class="daily-tab '+(selected?'selected':'')+'" data-day-offset="'+index+'"><span>'+name+'</span><b>'+date.getDate()+'</b>'+(isToday?'<i></i>':'')+'</button>';
+  }).join('');
+  const now=new Date(), completed=lessons.filter(e=>e.end<=now).length, upcoming=lessons.filter(e=>e.end>now).length;
+  const isToday=cursor.getTime()===today.getTime();
+  const heading=isToday?'Lezioni di oggi':'Lezioni del giorno';
+  const summary=upcoming ? upcoming+' da seguire' : (lessons.length ? 'Giornata conclusa' : 'Nessuna lezione');
+  const done=!upcoming && completed>0 ? '<div class="done-summary"><span>✓</span><div><strong>Lezioni concluse</strong><p>Hai finito per oggi: '+completed+' '+(completed===1?'lezione svolta.':'lezioni svolte.')+'</p></div></div>' : '';
+  const cards=lessons.length ? lessons.map(event=>{
+    const initials=event.title.split(/\s+/).slice(0,2).map(word=>word[0]).join('').toUpperCase();
+    const details=[event.location,event.notes.split('\n')[0]].filter(Boolean).join(' · ') || 'Dettagli non disponibili';
+    const ended=event.end<=now;
+    return '<article class="agenda-card group-'+event.group+(ended?' ended':'')+'" data-id="'+event.id+'"><span class="agenda-initials">'+escapeHtml(initials)+'</span><div class="agenda-main"><strong>'+escapeHtml(event.title)+'</strong><p>'+escapeHtml(details)+'</p></div><div class="agenda-time"><b>'+pad(event.start.getHours())+':'+pad(event.start.getMinutes())+'</b><span>→ '+pad(event.end.getHours())+':'+pad(event.end.getMinutes())+'</span></div></article>';
+  }).join('') : '<div class="agenda-empty"><span>☀</span><strong>Nessuna lezione</strong><p>Goditi il tempo libero di oggi.</p></div>';
+  calendar.innerHTML='<div class="daily-tabs">'+tabs+'</div><section class="daily-agenda"><header><div><h2>'+heading+'</h2><p>'+summary+'</p></div></header>'+done+'<div class="agenda-list">'+cards+'</div></section>';
 }
 function renderCalendarOptions() {
   const select=document.querySelector('#calendarInput');
@@ -134,7 +156,7 @@ document.querySelector('#nextWeek').onclick=()=>{cursor=addDays(cursor,viewMode=
 document.querySelector('#weekLabel').onclick=()=>{const now=new Date(); now.setHours(0,0,0,0); cursor=viewMode==='day'?now:mondayOf(now);render()};
 document.querySelector('#filterRow').onclick=e=>{if(e.target.dataset.filter){activeFilter=e.target.dataset.filter;render()}};
 document.querySelector('.view-switch').onclick=e=>{if(e.target.dataset.view){viewMode=e.target.dataset.view; if(viewMode==='week') cursor=mondayOf(cursor); render()}};
-document.querySelector('#weekGrid').onclick=e=>{const card=e.target.closest('.lesson-card');if(card)showLesson(card.dataset.id)};
+document.querySelector('.calendar').onclick=e=>{const tab=e.target.closest('[data-day-offset]'); if(tab){cursor=addDays(mondayOf(cursor),Number(tab.dataset.dayOffset));render();return;} const card=e.target.closest('[data-id]');if(card)showLesson(card.dataset.id)};
 document.querySelector('#addLesson').onclick=()=>showLesson();
 document.querySelector('#settingsButton').onclick=()=>{renderCalendarList();document.querySelector('#settingsDialog').showModal()};
 document.querySelector('#lessonForm').addEventListener('submit',e=>{
