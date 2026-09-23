@@ -71,6 +71,7 @@ function render() {
   document.querySelector('#filterRow').innerHTML=groups.map(g=>'<button class="filter '+(g===activeFilter?'active':'')+'" data-filter="'+g+'">'+(g==='Tutti'?'Tutti': 'Corso '+g)+'</button>').join('');
   const lessons=expandedLessons().filter(e=>activeFilter==='Tutti'||e.group===activeFilter);
   if(viewMode==='day') { renderDailyAgenda(lessons, today); renderCalendarOptions(); return; }
+  if(!document.querySelector('#calendarHead')) calendar.innerHTML='<div class="calendar-head" id="calendarHead"></div><div class="week-grid" id="weekGrid"></div>';
   document.querySelector('#calendarHead').innerHTML=names.map((n,i)=>'<div class="day-head '+(today.getTime()===addDays(cursor,i).getTime()?'today':'')+'">'+n+'<br><b>'+addDays(cursor,i).getDate()+'</b></div>').join('');
   document.querySelector('#weekGrid').innerHTML='';
   for(let i=0;i<7;i++) {
